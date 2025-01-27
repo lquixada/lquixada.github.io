@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Service Workers and Prefetch</title>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => console.log('Service Worker registered:', registration))
+        .catch(error => console.log('Service Worker registration failed:', error));
+
+      // Example of sending a message to the service worker
+      if (navigator.serviceWorker.controller) {
+        const payload = { message: 'Hello world' };
+        navigator.serviceWorker.controller.postMessage(payload);
+      }
+
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        console.log('Message from service worker:', event.data);
+      });
+
+      const messageChannel = new MessageChannel();
+
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({type: 'PORT_INITIALIZATION'}, [
+          messageChannel.port2,
+        ]);
+      }
+
+      //Listen to messages
+      messageChannel.port1.onmessage = (event) => {
+        console.log(event);
+      };
+    }
+  </script>
+
+  <!-- Prevents favicon 404 error -->
+  <link rel="shortcut icon" type="image/x-icon" href="data:image/x-icon;," />
+
+  <!--  The documents below will be downloaded without their subresources (js, css, imgs, ...) -->
+  <link rel="prefetch" href="/about" /> <!-- Local document -->
+  <link rel="prefetch" href="https://www.nytimes.com" cross-origin /> <!-- External document -->
+
+  <link rel="stylesheet" href="/style1.css"/>
+  <link rel="stylesheet" href="/style2.css"/>
+</head>
+
+<body>
+  <h1>Service Workers</h1>
+
+  <a href="/about/">About</a>
+
+  <p>This is a prefetch example with service workers</p>
+
+  <p><i>Note: preload doesn't work with documents</i></p>
+
+  <script src="/script1.js"></script>
+  <script src="/script2.js"></script>
+</body>
+
+</html>
